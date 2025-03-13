@@ -31,8 +31,7 @@ def coordenadas(entrada):
         if len(entrada) < 2 or len(entrada) > 3:  # Para casos como 'A1' o 'A10'
             print("Coordenadas incorrectas, debe tener una letra y un número válido. Ejemplo: B3")
             # return coordenada incorrecta
-
-            continue
+            return -1, -1
 
         letra = entrada[0]
         numero = entrada[1:]
@@ -40,19 +39,19 @@ def coordenadas(entrada):
         if letra not in letras:
             print(f"Coordenadas incorrecta, la letra debe estar entre {letras[0]} y {letras[-1]}.")
             # return coordenada incorrecta
-            continue
+            return -1, -1
 
         if not numero.isdigit():
             print("Coordenadas incorrecta, debe poner un número después de la letra.")
             # return coordenada incorrecta
-            continue
+            return -1, -1
 
         numero = int(numero)
 
         if numero < 1 or numero > num_rows:
             print(f"Coordenada incorrecta, el número debe estar entre 1 y {num_rows}.")
             # return coordenada incorrecta
-            continue
+            return -1, -1
 
         fila = numero - 1  # Convertimos a índice de matriz
         columna = letras.index(letra)  # Convertimos la letra a índice de matriz
@@ -131,12 +130,15 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as TCPServerSocket:
                         print("coordenada enviada: ", data)
                         fila_eleg, col_eleg = coordenadas(data)
                         msj = ""
-                        estado = buscamina(fila_eleg, col_eleg)
-                        if estado == 1:
-                            msj = "GAMEOVER"
-                        elif estado == 2:
-                            msj = "DESCUBIERTA"
-                        elif estado == 3:
+                        if fila_eleg != -1 and col_eleg != -1:
+                            estado = buscamina(fila_eleg, col_eleg)
+                            if estado == 1:
+                                msj = "GAMEOVER"
+                            elif estado == 2:
+                                msj = "DESCUBIERTA"
+                            elif estado == 3:
+                                msj = "REPETIDO"
+                        else:
                             msj = "OTRA"
                         Client_conn.sendall(msj.encode("utf-8"))
                     break
