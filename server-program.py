@@ -1,10 +1,11 @@
 #!/usr/bin python3
-import socket, random
-import time
+import socket, random, time
+
 
 HOST = "localhost"  # Direccion de la interfaz de loopback estándar (localhost)
 PORT = 65432  # Puerto que usa el cliente  (los puertos sin provilegios son > 1023)
 buffer_size = 1024
+casillas_descubiertas = 0
 
 def imprimir(matriz_imp):
     # letras
@@ -58,29 +59,21 @@ def coordenadas(entrada):
     columna = letras.index(letra)  # Convertimos la letra a índice de matriz
     return fila, columna
 
-def buscamina(fila, columna, tamano):
+def buscamina(fila, columna):
+
     _estado = 0
-    ganaste = 1
-    for i_ in range(tamano):
-        for j_ in range(tamano):
-            if matriz[i_][j_] == 0:
-                ganaste = 0
-    if ganaste == 0:
-        if matriz[fila][columna] == 1:
-            print("¡Pisaste una bomba! Perdiste.")
-            matriz[fila][columna] = 3
-            _estado = 1
-        elif matriz[fila][columna] == 0:
-            print("Casilla descubierta")
-            matriz[fila][columna] = 2
-            _estado = 2
-        else:
-            print("La casilla ya estaba descubierta, elige otra")
-            _estado = 3
-        imprimir(matriz)
-    elif ganaste == 1:
-        print("El jugador ganó!")
-        _estado = 4
+    if matriz[fila][columna] == 1:
+        print("¡Pisaste una bomba! Perdiste.")
+        matriz[fila][columna] = 3
+        _estado = 1
+    elif matriz[fila][columna] == 0:
+        print("Casilla descubierta")
+        matriz[fila][columna] = 2
+        _estado = 2
+    else:
+        print("La casilla ya estaba descubierta, elige otra")
+        _estado = 3
+    imprimir(matriz)
     return _estado
 
 
@@ -101,13 +94,15 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as TCPServerSocket:
             print("Entrada no válida. Ingrese un número.")
 
     if dificultad == 1:
-        num_rows = 9
-        num_cols = 9
+        num_rows = 4
+        num_cols = 4
         bombas = 10
     else:
         num_rows = 16
         num_cols = 16
         bombas = 40
+
+    total_casillas_libres = (num_rows * num_cols) - bombas
 
     matriz = [[0 for _ in range(num_cols)] for _ in range(num_rows)]
     aux = 0
@@ -137,23 +132,35 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as TCPServerSocket:
                     Client_conn.sendall(tamano_matriz)
                     inicio = time.time()
                     estado = 0
-                    while estado != 1:
+                    while estado != 1 and estado != 4:
                         data = Client_conn.recv(buffer_size).decode("utf-8")
                         print("coordenada enviada: ", data)
                         fila_eleg, col_eleg = coordenadas(data)
+                        aux = ""
                         msj = ""
                         if fila_eleg != -1 and col_eleg != -1:
-                            estado = buscamina(fila_eleg, col_eleg, num_cols)
+                            estado = buscamina(fila_eleg, col_eleg)
                             if estado == 1:
                                 msj = "GAMEOVER"
+
                             elif estado == 2:
                                 msj = "DESCUBIERTA"
+                                #contador para ganar
+                                casillas_descubiertas += 1
+                                if casillas_descubiertas == total_casillas_libres:
+                                    fin = time.time()
+                                    duracion = fin - inicio
+                                    estado = 4
+                                    print("El jugador ganó! Felicidades")
+                                    msj = "GANASTE"
+                                    aux = str(duracion)
+                                    Client_conn.sendall(msj.encode("utf-8"))
+                                    Client_conn.sendall(aux.encode("utf-8"))
+                                    print("Tiempo jugado: %.2f" % duracion)
+                                    break
+
                             elif estado == 3:
                                 msj = "REPETIDO"
-                            elif estado == 4:
-                                msj = "GANASTE"
-                                Client_conn.sendall(msj.encode("utf-8"))
-                                break
                         else:
                             msj = "OTRA"
                         Client_conn.sendall(msj.encode("utf-8"))
@@ -166,10 +173,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as TCPServerSocket:
                                         longitud = f"{len(bomba):02}".encode("utf-8")
                                         Client_conn.sendall(longitud)  # Enviar la longitud de la coordenada
                                         Client_conn.sendall(bomba.encode("utf-8"))  # Enviar la coordenada
-                        fin = time.time()
-                        duracion = fin - inicio
-                        Client_conn.sendall(msj.encode("utf-8"))
-                        print("Duración: %.2f" % duracion)
+                            fin = time.time()
+                            duracion = fin - inicio
+                            aux = str(duracion)
+                            Client_conn.sendall(aux.encode("utf-8"))
+                            print("Tiempo jugado: %.2f" % duracion)
                     break
             except ConnectionResetError:
                 print("Conexión perdida.")
