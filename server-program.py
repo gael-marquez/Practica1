@@ -1,5 +1,5 @@
 #!/usr/bin python3
-import socket, random
+import socket, random, time
 HOST = "localhost"  # Direccion de la interfaz de loopback estándar (localhost)
 PORT = 65432  # Puerto que usa el cliente  (los puertos sin provilegios son > 1023)
 buffer_size = 1024
@@ -125,6 +125,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as TCPServerSocket:
                     tamano_matriz = str(num_cols).encode("utf-8")
                     Client_conn.sendall(tamano_matriz)
                     estado = 0
+
+                    inicio = time.time()
                     while estado != 1:
                         data = Client_conn.recv(buffer_size).decode("utf-8")
                         print("coordenada enviada: ", data)
@@ -141,6 +143,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as TCPServerSocket:
                         else:
                             msj = "OTRA"
                         Client_conn.sendall(msj.encode("utf-8"))
+                        fin = time.time()
+                        duracion = fin - inicio
+                        Client_conn.sendall(msj.encode("utf-8"))
+                        print("Duración: %.2f" % duracion)
+
                     break
                 Client_conn.sendall(b"Juego iniciado")
             except ConnectionResetError:
