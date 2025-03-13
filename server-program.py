@@ -148,7 +148,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as TCPServerSocket:
                         print("Duración: %.2f" % duracion)
 
                     break
-                Client_conn.sendall(b"Juego iniciado")
+                Client_conn.sendall(b"Juego iniciadoo")
             except ConnectionResetError:
                 print("Conexión perdida.")
                 break
