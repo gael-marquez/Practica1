@@ -58,7 +58,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as TCPClientSocket:
             elif data == "DESCUBIERTA":
                 print("Casilla descubierta.")
                 estado = 2
+            elif data == "REPETIDO":
+                print("Ingresaste una casilla repetida. Intenta con otra.")
             elif data == "OTRA":
-                print("Ingresaste una casilla incorrecta. Intenta con otra. Ejem. (A1)")
-
+                print("Ingresaste una casilla inexistente. Ingresa otra (ej. B2).")
 
