@@ -72,7 +72,6 @@ def buscamina(fila, columna):
     imprimir(matriz)
     return estado
 
-
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as TCPServerSocket:
     TCPServerSocket.bind((HOST, PORT))
     TCPServerSocket.listen()
